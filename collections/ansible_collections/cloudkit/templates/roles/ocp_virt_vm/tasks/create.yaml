@@ -53,6 +53,57 @@
           storageClassName: "{{ storage_class }}"
     state: present
 
+- name: Create a floating IP to attach to VM
+  ansible.builtin.include_role:
+    name: massopencloud.esi.floating_ip
+    tasks_from: allocate_floating_ip
+  vars:
+    floating_ip_name: "{{ vm_name }}-floating-ip"
+    floating_ip_network: external
+
+- name: Create external LoadBalancer for VM
+  kubernetes.core.k8s:
+    state: present
+    definition:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: "{{ vm_name }}-load-balancer"
+          namespace: "{{ vm_namespace }}"
+        spec:
+          type: LoadBalancer
+          selector: "{{ default_vm_labels }}"
+          ports:
+          - name: ssh
+            port: 22
+            targetPort: 22
+          - name: http
+            port: 80
+            targetPort: 80
+
+- name: Get LoadBalancer IP
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    name: "{{ vm_name }}-load-balancer"
+    namespace: "{{ vm_namespace }}"
+  register: load_balancer
+  until: load_balancer.resources[0].status.loadBalancer.ingress is defined
+  retries: 30
+  delay: 10
+
+- name: Create floating IP port forwarding to load balancer
+  ansible.builtin.include_role:
+    name: massopencloud.esi.floating_ip
+    tasks_from: create_port_forwarding
+  vars:
+    internal_ip: load_balancer.resources[0].status.loadBalancer.ingress[0].ip
+    floating_ip: allocate_floating_ip_result
+    internal_network: hypershift
+    ports:
+      - "22:22"
+      - "80:80"
+
 - name: Create VirtualMachine
   kubernetes.core.k8s:
     definition:
