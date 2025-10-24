@@ -29,7 +29,7 @@ eda_rulebook_activations:  # noqa: var-naming[no-role-prefix]
     eda_credentials:
       - "{{ aap_eda_service_user_name }}"
     project: "{{ aap_prefix }}-eda"
-    rulebook: "cluster_fulfillment.yml"
+    rulebook: "rulebooks/cluster_fulfillment.yml"
     decision_environment: "{{ aap_prefix }}-de"
     log_level: info
     k8s_service_name: "{{ aap_prefix }}-eda-service"
