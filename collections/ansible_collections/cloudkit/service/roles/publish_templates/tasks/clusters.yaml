@@ -42,5 +42,3 @@
       authorization: Bearer {{ cloudkit_fulfillment_service_token }}
     body_format: json
     body: "{{ template }}"
-
-

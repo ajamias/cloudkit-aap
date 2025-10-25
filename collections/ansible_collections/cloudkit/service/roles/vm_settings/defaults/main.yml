@@ -1,5 +1,5 @@
 ---
-vm_settings_template_default: 
+vm_settings_template_default:
   cloud_init_config:
     users:
       - name: osac
@@ -11,4 +11,3 @@ vm_settings_template_default:
         lock_passwd: true
         ssh_authorized_keys: "{{ vm_settings_template_parameters.ssh_public_key | default([]) }}"
     ssh_pwauth: false
-

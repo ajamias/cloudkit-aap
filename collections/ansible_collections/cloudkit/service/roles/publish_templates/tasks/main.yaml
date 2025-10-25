@@ -4,7 +4,3 @@
 
 - name: Apply templates for volumes
   ansible.builtin.import_tasks: vms.yaml
-
-  
-   
-    

@@ -6,7 +6,7 @@ argument_specs:
         description: Cluster templates to publish to the cluster_templates endpoint
       cloudkit_vm_templates:
         type: list
-        description: VM templates 
+        description: VM templates
       cloudkit_fulfillment_service_uri:
         type: str
         required: true
