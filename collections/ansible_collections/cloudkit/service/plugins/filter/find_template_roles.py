@@ -177,7 +177,7 @@ class Metadata(Base):
     template_type: TemplateTypeEnum = pydantic.Field(
         default=TemplateTypeEnum.cluster, exclude=True
     )
-    default_node_request: list[NodeRequest]
+    default_node_request: list[NodeRequest] = []
     allowed_resource_classes: list[str] | None = None
 
 
@@ -336,6 +336,14 @@ def find_vm_template_roles_filter(requested: list[str]):
         for role in find_template_roles(requested)
         if role.template_type == "vm"
     ]
+
+class FilterModule:
+    def filters(self):
+        return {
+            "find_cluster_template_roles": find_cluster_template_roles_filter,
+            "find_vm_template_roles": find_vm_template_roles_filter,
+        }
+
 
 
 if __name__ == "__main__":
