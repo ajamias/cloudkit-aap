@@ -13,11 +13,11 @@ argument_specs:
       cloudkit_fulfillment_service_token:
         type: str
         required: true
-      publish_cluster_templates_api_endpoint:
+      publish_templates_cluster_api_endpoint:
         type: str
         description: API endpoint for cluster templates
         default: "{{ cloudkit_fulfillment_service_uri }}/api/fulfillment/v1/cluster_templates"
-      publish_vm_templates_api_endpoint:
+      publish_templates_vm_api_endpoint:
         type: str
         description: API endpoint for VM templates
         default: "{{ cloudkit_fulfillment_service_uri }}/api/fulfillment/v1/virtual_machine_templates"
