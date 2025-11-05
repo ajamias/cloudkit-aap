@@ -195,6 +195,21 @@
       - "80:80"
     description: "forwards port 22:22 for ssh and 80:80 for http"
 
+- name: Annotate VirtualMachine with floating IP information
+  kubernetes.core.k8s:
+    api_version: kubevirt.io/v1
+    kind: VirtualMachine
+    name: "{{ vm_name }}"
+    namespace: "{{ vm_target_namespace }}"
+    state: present
+    definition:
+      metadata:
+        annotations:
+          cloudkit.openshift.io/floating-ip-address: "{{ allocate_floating_ip_result }}"
+          cloudkit.openshift.io/floating-ip-name: "{{ vm_name }}-floating-ip"
+          cloudkit.openshift.io/load-balancer-ip: "{{ load_balancer.resources[0].status.loadBalancer.ingress[0].ip }}"
+          cloudkit.openshift.io/floating-ip-network: "{{ floating_ip_network | default('external') }}"
+
 - name: Get VM status
   kubernetes.core.k8s_info:
     api_version: kubevirt.io/v1
