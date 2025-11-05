@@ -182,18 +182,33 @@
   retries: 30
   delay: 10
 
-- name: Create floating IP port forwarding to load balancer
+- name: Get VirtualMachine Instance to find the node
+  kubernetes.core.k8s_info:
+    api_version: kubevirt.io/v1
+    kind: VirtualMachineInstance
+    name: "{{ vm_name }}"
+    namespace: "{{ vm_target_namespace }}"
+  register: vmi_info
+
+- name: Get Node information for the VM
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+    name: "{{ vmi_info.resources[0].status.nodeName }}"
+  register: node_info
+
+- name: Create floating IP port forwarding to VM node NodePorts
   ansible.builtin.include_role:
     name: massopencloud.esi.floating_ip
     tasks_from: create_port_forwarding
   vars:
-    internal_ip: load_balancer.resources[0].status.loadBalancer.ingress[0].ip
-    floating_ip: allocate_floating_ip_result
+    internal_ip: "{{ node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
+    floating_ip: "{{ allocate_floating_ip_result }}"
     internal_network: hypershift
     ports:
       - "22:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'ssh') | map(attribute='nodePort') | first }}"
       - "80:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'http') | map(attribute='nodePort') | first }}"
-    description: "forwards floating IP ports to NodePorts (SSH and HTTP)"
+    description: "forwards floating IP ports to VM node NodePorts (SSH and HTTP)"
 
 - name: Annotate VirtualMachine with floating IP information
   kubernetes.core.k8s:
@@ -208,6 +223,8 @@
           cloudkit.openshift.io/floating-ip-address: "{{ allocate_floating_ip_result }}"
           cloudkit.openshift.io/floating-ip-name: "{{ vm_name }}-floating-ip"
           cloudkit.openshift.io/load-balancer-ip: "{{ load_balancer.resources[0].status.loadBalancer.ingress[0].ip }}"
+          cloudkit.openshift.io/vm-node-name: "{{ vmi_info.resources[0].status.nodeName }}"
+          cloudkit.openshift.io/vm-node-ip: "{{ node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
           cloudkit.openshift.io/floating-ip-network: "{{ floating_ip_network | default('external') }}"
 
 - name: Get VM status
