@@ -159,7 +159,7 @@
         kind: Service
         metadata:
           name: "{{ vm_name }}-load-balancer"
-          namespace: "{{ vm_namespace }}"
+          namespace: "{{ vm_target_namespace }}"
         spec:
           type: LoadBalancer
           selector: "{{ default_vm_labels }}"
@@ -176,7 +176,7 @@
     api_version: v1
     kind: Service
     name: "{{ vm_name }}-load-balancer"
-    namespace: "{{ vm_namespace }}"
+    namespace: "{{ vm_target_namespace }}"
   register: load_balancer
   until: load_balancer.resources[0].status.loadBalancer.ingress is defined
   retries: 30
