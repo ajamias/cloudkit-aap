@@ -191,9 +191,9 @@
     floating_ip: allocate_floating_ip_result
     internal_network: hypershift
     ports:
-      - "22:22"
-      - "80:80"
-    description: "forwards port 22:22 for ssh and 80:80 for http"
+      - "22:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'ssh') | map(attribute='nodePort') | first }}"
+      - "80:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'http') | map(attribute='nodePort') | first }}"
+    description: "forwards floating IP ports to NodePorts (SSH and HTTP)"
 
 - name: Annotate VirtualMachine with floating IP information
   kubernetes.core.k8s:
