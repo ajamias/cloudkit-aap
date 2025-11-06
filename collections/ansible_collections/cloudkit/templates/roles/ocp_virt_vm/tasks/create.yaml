@@ -160,6 +160,7 @@
         metadata:
           name: "{{ vm_name }}-load-balancer"
           namespace: "{{ vm_target_namespace }}"
+          labels: "{{ default_vm_labels }}"
         spec:
           type: LoadBalancer
           selector: "{{ default_vm_labels }}"
