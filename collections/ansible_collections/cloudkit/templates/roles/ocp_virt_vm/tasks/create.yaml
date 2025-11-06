@@ -164,13 +164,7 @@
         spec:
           type: LoadBalancer
           selector: "{{ default_vm_labels }}"
-          ports:
-          - name: ssh
-            port: 22
-            targetPort: 22
-          - name: http
-            port: 80
-            targetPort: 80
+          ports: "{{ vm_service_ports }}"
 
 - name: Get LoadBalancer IP
   kubernetes.core.k8s_info:
