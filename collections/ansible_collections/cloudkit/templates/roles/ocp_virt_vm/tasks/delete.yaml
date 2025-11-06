@@ -19,7 +19,7 @@
   block:
     - name: Delete floating IP port forwarding
       ansible.builtin.command: >-
-        openstack esi port forwarding delete {{ vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-address'] }}
+        openstack esi port forwarding purge {{ vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-address'] }}
       ignore_errors: true
 
     - name: Delete floating IP

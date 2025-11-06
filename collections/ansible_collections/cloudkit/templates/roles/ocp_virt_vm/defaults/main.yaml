@@ -12,11 +12,10 @@ default_vm_service_type: "ClusterIP"
 
 # Default service ports for common applications
 default_vm_service_ports:
-  ssh:
-    - name: "ssh"
-      port: 22
-      target_port: 22
-      protocol: "TCP"
+  - name: "ssh"
+    port: 22
+    targetPort: 22
+    protocol: "TCP"
 
 # Storage Defaults
 default_vm_storage_class: "nfs-client"  # NFS storage operator storage class

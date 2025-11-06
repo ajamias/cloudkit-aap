@@ -127,22 +127,6 @@
       status: "True"
     wait_timeout: 600
 
-- name: Create VM service
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: "{{ vm_name }}-service"
-        namespace: "{{ vm_target_namespace }}"
-        labels: "{{ default_vm_labels }}"
-      spec:
-        type: "{{ vm_service_type }}"
-        selector: "{{ default_vm_labels }}"
-        ports: "{{ vm_service_ports }}"
-    state: present
-  when: vm_expose_service and vm_service_ports | length > 0
-
 - name: Create a floating IP to attach to VM
   ansible.builtin.include_role:
     name: massopencloud.esi.floating_ip
@@ -150,21 +134,25 @@
     floating_ip_state: present
     floating_ip_name: "{{ vm_name }}-floating-ip"
     floating_ip_network: external
+    floating_ip_properties:
+      vm_name: "{{ vm_name }}"
+      vm_namespace: "{{ vm_target_namespace }}"
+      purpose: "o-sac"
 
 - name: Create external LoadBalancer for VM
   kubernetes.core.k8s:
     state: present
     definition:
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: "{{ vm_name }}-load-balancer"
-          namespace: "{{ vm_target_namespace }}"
-          labels: "{{ default_vm_labels }}"
-        spec:
-          type: LoadBalancer
-          selector: "{{ default_vm_labels }}"
-          ports: "{{ vm_service_ports }}"
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ vm_name }}-load-balancer"
+        namespace: "{{ vm_target_namespace }}"
+        labels: "{{ default_vm_labels }}"
+      spec:
+        type: LoadBalancer
+        selector: "{{ default_vm_labels }}"
+        ports: "{{ vm_service_ports }}"
 
 - name: Get LoadBalancer IP
   kubernetes.core.k8s_info:
@@ -192,6 +180,11 @@
     name: "{{ vmi_info.resources[0].status.nodeName }}"
   register: node_info
 
+- name: Build port mappings list
+  ansible.builtin.set_fact:
+    port_mappings: "{{ port_mappings | default([]) + [item.port | string + ':' + item.nodePort | string] }}"
+  loop: "{{ load_balancer.resources[0].spec.ports }}"
+
 - name: Create floating IP port forwarding to VM node NodePorts
   ansible.builtin.include_role:
     name: massopencloud.esi.floating_ip
@@ -200,10 +193,8 @@
     internal_ip: "{{ node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
     floating_ip: "{{ allocate_floating_ip_result }}"
     internal_network: hypershift
-    ports:
-      - "22:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'ssh') | map(attribute='nodePort') | first }}"
-      - "80:{{ load_balancer.resources[0].spec.ports | selectattr('name', 'equalto', 'http') | map(attribute='nodePort') | first }}"
-    description: "forwards floating IP ports to VM node NodePorts (SSH and HTTP)"
+    ports: "{{ port_mappings }}"
+    description: "forwards floating IP ports to VM node NodePorts"
 
 - name: Annotate VirtualMachine with floating IP information
   kubernetes.core.k8s:
