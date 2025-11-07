@@ -11,25 +11,14 @@
     namespace: "{{ vm_target_namespace }}"
   register: vm_info
 
-- name: Clean up floating IP (if exists)
+- name: Delete floating IP
+  ansible.builtin.include_role:
+    name: massopencloud.esi.floating_ip
+    tasks_from: destroy_floating_ip
+  vars:
+    floating_ip_name: "{{ vm_name }}-floating-ip"
   when:
-    - vm_info.resources | length > 0
-    - vm_info.resources[0].metadata.annotations is defined
     - vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-address'] is defined
-  block:
-    - name: Delete floating IP port forwarding
-      ansible.builtin.command: >-
-        openstack esi port forwarding purge {{ vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-address'] }}
-      ignore_errors: true
-
-    - name: Delete floating IP
-      ansible.builtin.include_role:
-        name: massopencloud.esi.floating_ip
-        tasks_from: destroy_floating_ip
-      vars:
-        floating_ip_state: absent
-        floating_ip_name: "{{ vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-name'] | default(vm_name + '-floating-ip') }}"
-        floating_ip_network: "{{ vm_info.resources[0].metadata.annotations['cloudkit.openshift.io/floating-ip-network'] | default('external') }}"
 
 - name: Stop VirtualMachine
   kubernetes.core.k8s:

@@ -8,8 +8,7 @@
     vm_image_source: "{{ template_parameters.vm_image_source | default(default_vm_image_source) }}"
     vm_os_type: "{{ template_parameters.vm_os_type | default(default_vm_os_type) }}"
     storage_class: "{{ default_vm_storage_class }}"
-    vm_expose_service: "{{ default_vm_expose_service }}"
-    vm_service_type: "{{ default_vm_service_type }}"
+    vm_internal_network: "{{ default_vm_internal_network }}"
     vm_service_ports: "{{ default_vm_service_ports }}"
     vm_network_type: "{{ template_parameters.vm_network_type | default(default_vm_network_type) }}"
     ssh_public_key: "{{ template_parameters.ssh_public_key | default(default_ssh_public_key) }}"
@@ -133,7 +132,6 @@
   vars:
     floating_ip_state: present
     floating_ip_name: "{{ vm_name }}-floating-ip"
-    floating_ip_network: external
     floating_ip_properties:
       vm: "{{ vm_name }}"
       instance: "{{ vm_order.metadata.namespace }}"
@@ -192,11 +190,11 @@
   vars:
     internal_ip: "{{ node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
     floating_ip: "{{ allocate_floating_ip_result }}"
-    internal_network: hypershift
+    internal_network: "{{ vm_internal_network }}"
     ports: "{{ port_mappings }}"
     description: "forwards floating IP ports to VM node NodePorts"
 
-- name: Annotate VirtualMachine with floating IP information
+- name: Annotate VirtualMachine with floating IP address
   kubernetes.core.k8s:
     api_version: kubevirt.io/v1
     kind: VirtualMachine
@@ -207,11 +205,6 @@
       metadata:
         annotations:
           cloudkit.openshift.io/floating-ip-address: "{{ allocate_floating_ip_result }}"
-          cloudkit.openshift.io/floating-ip-name: "{{ vm_name }}-floating-ip"
-          cloudkit.openshift.io/load-balancer-ip: "{{ load_balancer.resources[0].status.loadBalancer.ingress[0].ip }}"
-          cloudkit.openshift.io/vm-node-name: "{{ vmi_info.resources[0].status.nodeName }}"
-          cloudkit.openshift.io/vm-node-ip: "{{ node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
-          cloudkit.openshift.io/floating-ip-network: "{{ floating_ip_network | default('external') }}"
 
 - name: Get VM status
   kubernetes.core.k8s_info:

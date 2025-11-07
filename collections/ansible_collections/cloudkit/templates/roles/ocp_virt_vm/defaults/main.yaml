@@ -6,9 +6,8 @@ default_vm_os_type: "linux"
 default_vm_image_source: "quay.io/containerdisks/fedora:latest"
 
 # Network Configuration Defaults
+default_vm_internal_network: "hypershift"
 default_vm_network_type: "pod"
-default_vm_expose_service: false
-default_vm_service_type: "ClusterIP"
 
 # Default service ports for common applications
 default_vm_service_ports:
