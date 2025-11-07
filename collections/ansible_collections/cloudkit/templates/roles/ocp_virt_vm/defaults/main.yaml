@@ -18,7 +18,7 @@ default_vm_service_ports:
     protocol: "TCP"
 
 # Storage Defaults
-default_vm_storage_class: "nfs-client"  # NFS storage operator storage class
+default_vm_storage_class: "ocs-external-storagecluster-ceph-rbd"  # NFS storage operator storage class
 default_additional_disks: []
 default_ssh_public_key: ""
 
